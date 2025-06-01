@@ -223,6 +223,7 @@
     <div class="container">
         <div class="logo">🔐</div>
         <h1 id="title">Pesan Rahasia</h1>
+        <div class="subtitle" id="subtitle">Tulis pesan rahasia dan bagikan dengan teman Anda</div>
         
         <div id="createForm">
             <div class="form-group">
@@ -285,7 +286,7 @@
             }
 
             try {
-                const encoded = btoa(unescape(encodeURIComponent(messageText)));
+                const encoded = btoa(encodeURIComponent(messageText));
                 const currentUrl = window.location.origin + window.location.pathname;
                 const secretLink = `${currentUrl}?msg=${encoded}`;
                 
@@ -297,16 +298,17 @@
                 document.getElementById('subtitle').textContent = 'Bagikan link di bawah ini kepada penerima';
                 
             } catch (error) {
+                console.error('Error creating link:', error);
                 showError('Terjadi kesalahan saat membuat link. Silakan coba lagi.');
             }
         }
 
         function readMessage(encodedMsg) {
             try {
-                const decoded = decodeURIComponent(escape(atob(encodedMsg)));
+                const decoded = decodeURIComponent(atob(encodedMsg));
                 
                 document.getElementById('decodedMessage').innerHTML = `
-                    <div style="background: white; padding: 15px; border-radius: 8px; border: 2px solid #28a745; white-space: pre-wrap; word-wrap: break-word;">
+                    <div style="background: #2a2a2a; color: #e0e0e0; padding: 15px; border-radius: 8px; border: 2px solid #28a745; white-space: pre-wrap; word-wrap: break-word;">
                         ${escapeHtml(decoded)}
                     </div>
                 `;
@@ -322,6 +324,7 @@
                 window.history.replaceState({}, document.title, url.pathname);
                 
             } catch (error) {
+                console.error('Error reading message:', error);
                 showError('Link pesan tidak valid atau sudah rusak. Pastikan link yang kamu buka benar dan lengkap.');
             }
         }
@@ -330,7 +333,7 @@
             const link = document.getElementById('generatedLink').textContent;
             const copyBtn = document.querySelector('.copy-btn');
             
-            if (navigator.clipboard) {
+            if (navigator.clipboard && window.isSecureContext) {
                 navigator.clipboard.writeText(link).then(() => {
                     copyBtn.textContent = '✅ Tersalin!';
                     copyBtn.classList.add('copied');
@@ -338,22 +341,41 @@
                         copyBtn.textContent = '📋 Salin Link';
                         copyBtn.classList.remove('copied');
                     }, 2000);
+                }).catch(() => {
+                    fallbackCopyTextToClipboard(link, copyBtn);
                 });
             } else {
-                const textArea = document.createElement('textarea');
-                textArea.value = link;
-                document.body.appendChild(textArea);
-                textArea.select();
+                fallbackCopyTextToClipboard(link, copyBtn);
+            }
+        }
+
+        function fallbackCopyTextToClipboard(text, button) {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            textArea.style.top = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
                 document.execCommand('copy');
-                document.body.removeChild(textArea);
-                
-                copyBtn.textContent = '✅ Tersalin!';
-                copyBtn.classList.add('copied');
+                button.textContent = '✅ Tersalin!';
+                button.classList.add('copied');
                 setTimeout(() => {
-                    copyBtn.textContent = '📋 Salin Link';
-                    copyBtn.classList.remove('copied');
+                    button.textContent = '📋 Salin Link';
+                    button.classList.remove('copied');
+                }, 2000);
+            } catch (err) {
+                console.error('Fallback: Unable to copy', err);
+                button.textContent = '❌ Gagal';
+                setTimeout(() => {
+                    button.textContent = '📋 Salin Link';
                 }, 2000);
             }
+            
+            document.body.removeChild(textArea);
         }
 
         function createNewMessage() {
@@ -365,7 +387,7 @@
             document.getElementById('message').value = '';
             
             document.getElementById('title').textContent = 'Pesan Rahasia';
-            document.getElementById('subtitle').textContent = 'Kirim pesan yang aman tanpa disimpan di server';
+            document.getElementById('subtitle').textContent = 'Tulis pesan rahasia dan bagikan dengan teman Anda';
             
             document.getElementById('message').focus();
         }
