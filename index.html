@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Kirim Pesan Rahasia</title>
+</head>
+<body>
+  <h1>Kirim Pesan Rahasia (Tanpa Disimpan)</h1>
+  <form id="form">
+    <textarea id="message" rows="5" cols="40" placeholder="Tulis pesanmu..." required></textarea><br>
+    <button type="submit">Buat Link Rahasia</button>
+  </form>
+
+  <div id="result" style="margin-top: 20px;"></div>
+
+  <script>
+    const form = document.getElementById('form');
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      const msg = document.getElementById('message').value;
+      const encoded = btoa(unescape(encodeURIComponent(msg)));
+      const link = `${location.origin}/read.php?msg=${encoded}`;
+      document.getElementById('result').innerHTML = `
+        <p>Bagikan link ini:</p>
+        <a href="${link}">${link}</a>
+      `;
+    });
+  </script>
+</body>
+</html>
